@@ -2,8 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Served from a GitHub Pages project site (https://<user>.github.io/find/),
+// so production assets live under /find/. Local dev stays at the root.
+// Override with BASE_PATH at build time for a custom domain or user site.
+const BASE = process.env.BASE_PATH ?? '/find/'
+
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => {
+  const base = command === 'build' ? BASE : '/'
+  return {
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -17,8 +25,8 @@ export default defineConfig({
         background_color: '#0b0f17',
         display: 'standalone',
         orientation: 'any',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
@@ -46,4 +54,5 @@ export default defineConfig({
       },
     }),
   ],
+  }
 })

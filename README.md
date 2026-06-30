@@ -74,6 +74,23 @@ npm run lint       # oxlint
 > Location requires a secure context. `localhost` and any `https://` host work;
 > plain-HTTP LAN IPs will not grant geolocation.
 
+## Deploy (GitHub Pages)
+
+This repo ships a workflow (`.github/workflows/deploy.yml`) that builds the PWA
+and publishes it to a `gh-pages` branch on every push. Production builds use a
+`/find/` base path (the repo name); override it with the `BASE_PATH` env var for
+a custom domain or a user/organisation site.
+
+One-time setup, then it's automatic:
+
+1. Push the branch — the **Deploy to GitHub Pages** action builds and creates the
+   `gh-pages` branch.
+2. In the repo, go to **Settings → Pages → Build and deployment**, set
+   **Source = Deploy from a branch**, choose **`gh-pages` / `root`**, and save.
+3. Open `https://<your-user>.github.io/find/` on any phone or tablet and
+   **Add to Home Screen** to install it. (HTTPS satisfies the geolocation
+   secure-context requirement, so the live map works.)
+
 ## Project layout
 
 ```
