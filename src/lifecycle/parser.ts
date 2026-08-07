@@ -190,6 +190,7 @@ function isPureLiteralTerminator(source: string, from: number): boolean {
   if (ch === '\n' || ch === '\r' || ch === ',' || ch === ';') return true
   if (ch === ')' || ch === ']' || ch === '}') return true
   if (ch === '/' && source[p + 1] === '/') return true
+  if (ch === '/' && source[p + 1] === '*') return true
   return false
 }
 

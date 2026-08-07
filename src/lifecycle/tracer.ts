@@ -332,8 +332,20 @@ interface TraceHandle {
   console: { log: (...args: unknown[]) => void }
 }
 
-const MUTATING_METHODS = new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse', 'fill', 'copyWithin'])
-const DERIVING_METHODS = new Set(['map', 'filter', 'slice', 'concat', 'flat', 'flatMap'])
+/**
+ * Array method categories. Membership in these sets drives how the Proxy's
+ * `get` trap dispatches — each category needs different callback / return
+ * handling so tracked entities never leak as raw values to user code, and
+ * user callbacks always see wrapped items.
+ */
+const IN_PLACE_MUTATING_METHODS = new Set(['push', 'unshift', 'fill', 'copyWithin'])
+const EXTRACTING_METHODS = new Set(['pop', 'shift', 'splice'])
+const REVERSING_METHODS = new Set(['reverse'])
+const SORT_METHODS = new Set(['sort'])
+const CB_ITEM_METHODS = new Set(['forEach', 'find', 'findIndex', 'findLast', 'findLastIndex', 'some', 'every'])
+const CB_ITEM_DERIVE_METHODS = new Set(['map', 'filter', 'flatMap'])
+const CB_ACC_ITEM_METHODS = new Set(['reduce', 'reduceRight'])
+const NO_CB_DERIVE_METHODS = new Set(['slice', 'concat', 'flat'])
 
 function propLabel(prop: string): string {
   return /^\d+$/.test(prop) ? `[${prop}]` : `.${prop}`
@@ -444,16 +456,120 @@ function createTraceHandle(state: TracerState): TraceHandle {
     state.rawById.set(id, raw)
   }
 
+  /** Wrap a callback so its item arg gets a Proxy and any returned Proxy is
+   *  unwrapped before the native method sees it (so map/filter don't end up
+   *  producing arrays of proxies). */
+  function wrapItemCallback(
+    entityId: string,
+    entityName: string,
+    cb: unknown,
+    itemArgIndex: number,
+    unwrapReturn: boolean,
+  ): unknown {
+    if (typeof cb !== 'function') return cb
+    const fn = cb as (...a: unknown[]) => unknown
+    return (...cbArgs: unknown[]) => {
+      const item = cbArgs[itemArgIndex]
+      const idx = cbArgs[itemArgIndex + 1]
+      if (item !== null && typeof item === 'object') {
+        const idxPath = typeof idx === 'number' ? String(idx) : ''
+        cbArgs[itemArgIndex] = wrapValue(entityId, idxPath, item, entityName)
+      }
+      const result = fn(...cbArgs)
+      return unwrapReturn ? unwrapIfProxy(result) : result
+    }
+  }
+
+  /** Wrap a sort comparator so both compared elements are proxied. */
+  function wrapCompareCallback(entityId: string, entityName: string, cb: unknown): unknown {
+    if (typeof cb !== 'function') return cb
+    const fn = cb as (a: unknown, b: unknown) => number
+    return (a: unknown, b: unknown) => {
+      const wa = a !== null && typeof a === 'object' ? wrapValue(entityId, '', a, entityName) : a
+      const wb = b !== null && typeof b === 'object' ? wrapValue(entityId, '', b, entityName) : b
+      return fn(wa, wb)
+    }
+  }
+
+  /** Wrap a value that just came out of the target (extracted from pop/shift/
+   *  splice, yielded by an iterator) so mutations through it stay tracked. */
+  function wrapExtracted(entityId: string, entityName: string, value: unknown): unknown {
+    if (value === null || typeof value !== 'object') return value
+    return wrapValue(entityId, '', value, entityName)
+  }
+
+  function recordMethodEvent(
+    entityId: string,
+    basePath: string,
+    prop: string,
+    rawArgs: unknown[],
+    target: unknown,
+  ): void {
+    pushEvent({
+      kind: 'method',
+      entityId,
+      path: basePath,
+      detail: `${prop}(${previewArgs(rawArgs)})`,
+      value: snapshot(target, 0, new Set()),
+      args: rawArgs.map((a) => snapshot(a, 0, new Set())),
+    })
+  }
+
+  function recordDeriveEvent(
+    entityId: string,
+    basePath: string,
+    prop: string,
+    rawArgs: unknown[],
+    rawResult: unknown,
+    entityName: string,
+  ): { newId: string; newName: string } {
+    const n = ++state.entityCounter
+    const newId = `e${n}`
+    const newName = `${entityName}.${prop}(…)#${n}`
+    registerEntity(newId, newName, 'array', entityId, rawResult)
+    pushEvent({
+      kind: 'derive',
+      entityId,
+      path: basePath,
+      detail: `${prop}(${previewArgs(rawArgs)})`,
+      value: snapshot(rawResult, 0, new Set()),
+      args: rawArgs.map((a) => snapshot(a, 0, new Set())),
+      producedId: newId,
+    })
+    return { newId, newName }
+  }
+
   function makeHandler(entityId: string, basePath: string, entityName: string): ProxyHandler<object> {
     return {
       get(target, prop, _receiver) {
-        if (prop === Symbol.iterator || prop === Symbol.toPrimitive) {
-          pushEvent({
-            kind: 'iterate',
-            entityId,
-            path: basePath,
-            detail: prop === Symbol.iterator ? 'iterate' : 'toPrimitive',
-          })
+        if (prop === Symbol.iterator) {
+          pushEvent({ kind: 'iterate', entityId, path: basePath, detail: 'iterate' })
+          const nativeIter = (Reflect.get(target, prop, target) as () => Iterator<unknown>).bind(target)
+          return () => {
+            const it = nativeIter()
+            return {
+              next: () => {
+                const step = it.next()
+                if (step.done) return step
+                const wrapped =
+                  step.value !== null && typeof step.value === 'object'
+                    ? wrapValue(entityId, '', step.value, entityName)
+                    : step.value
+                return { value: wrapped, done: false }
+              },
+              return: (v?: unknown) => (typeof it.return === 'function' ? it.return(v) : { value: v, done: true }),
+              throw: (e?: unknown) => {
+                if (typeof it.throw === 'function') return it.throw(e)
+                throw e
+              },
+              [Symbol.iterator]() {
+                return this
+              },
+            }
+          }
+        }
+        if (prop === Symbol.toPrimitive) {
+          pushEvent({ kind: 'iterate', entityId, path: basePath, detail: 'toPrimitive' })
           const fn = Reflect.get(target, prop, target) as unknown
           return typeof fn === 'function' ? (fn as (...a: unknown[]) => unknown).bind(target) : fn
         }
@@ -461,42 +577,98 @@ function createTraceHandle(state: TracerState): TraceHandle {
           return Reflect.get(target, prop, target) as unknown
         }
 
-        if (Array.isArray(target) && MUTATING_METHODS.has(prop)) {
-          return (...args: unknown[]) => {
-            const rawArgs = args.map(unwrapIfProxy)
-            const argSnap = rawArgs.map((a) => snapshot(a, 0, new Set()))
-            const outcome = callAsFunction(target, prop, rawArgs)
-            pushEvent({
-              kind: 'method',
-              entityId,
-              path: basePath,
-              detail: `${prop}(${previewArgs(rawArgs)})`,
-              value: snapshot(target, 0, new Set()),
-              args: argSnap,
-            })
-            return outcome === target ? _receiver : outcome
+        if (Array.isArray(target)) {
+          if (IN_PLACE_MUTATING_METHODS.has(prop)) {
+            return (...args: unknown[]) => {
+              const rawArgs = args.map(unwrapIfProxy)
+              callAsFunction(target, prop, rawArgs)
+              recordMethodEvent(entityId, basePath, prop, rawArgs, target)
+              return _receiver
+            }
           }
-        }
 
-        if (Array.isArray(target) && DERIVING_METHODS.has(prop)) {
-          return (...args: unknown[]) => {
-            const rawArgs = args.map(unwrapIfProxy)
-            const argSnap = rawArgs.map((a) => snapshot(a, 0, new Set()))
-            const rawResult = callAsFunction(target, prop, rawArgs)
-            const n = ++state.entityCounter
-            const newId = `e${n}`
-            const newName = `${entityName}.${prop}(…)#${n}`
-            registerEntity(newId, newName, 'array', entityId, rawResult)
-            pushEvent({
-              kind: 'derive',
-              entityId,
-              path: basePath,
-              detail: `${prop}(${previewArgs(rawArgs)})`,
-              value: snapshot(rawResult, 0, new Set()),
-              args: argSnap,
-              producedId: newId,
-            })
-            return wrapValue(newId, '', rawResult, newName)
+          if (EXTRACTING_METHODS.has(prop)) {
+            return (...args: unknown[]) => {
+              const rawArgs = args.map(unwrapIfProxy)
+              const outcome = callAsFunction(target, prop, rawArgs)
+              recordMethodEvent(entityId, basePath, prop, rawArgs, target)
+              if (prop === 'splice' && Array.isArray(outcome)) {
+                return outcome.map((v) => wrapExtracted(entityId, entityName, v))
+              }
+              return wrapExtracted(entityId, entityName, outcome)
+            }
+          }
+
+          if (REVERSING_METHODS.has(prop)) {
+            return (...args: unknown[]) => {
+              const rawArgs = args.map(unwrapIfProxy)
+              callAsFunction(target, prop, rawArgs)
+              recordMethodEvent(entityId, basePath, prop, rawArgs, target)
+              return _receiver
+            }
+          }
+
+          if (SORT_METHODS.has(prop)) {
+            return (...args: unknown[]) => {
+              const wrappedArgs = args.length > 0 ? [wrapCompareCallback(entityId, entityName, args[0])] : []
+              const rawArgs = args.map(unwrapIfProxy)
+              callAsFunction(target, prop, wrappedArgs)
+              recordMethodEvent(entityId, basePath, prop, rawArgs, target)
+              return _receiver
+            }
+          }
+
+          if (CB_ITEM_METHODS.has(prop)) {
+            return (...args: unknown[]) => {
+              const rawArgs = args.map(unwrapIfProxy)
+              const wrappedArgs =
+                args.length > 0 ? [wrapItemCallback(entityId, entityName, args[0], 0, false), ...args.slice(1)] : []
+              pushEvent({
+                kind: 'iterate',
+                entityId,
+                path: basePath,
+                detail: `${prop}(${previewArgs(rawArgs)})`,
+                args: rawArgs.map((a) => snapshot(a, 0, new Set())),
+              })
+              return callAsFunction(target, prop, wrappedArgs)
+            }
+          }
+
+          if (CB_ITEM_DERIVE_METHODS.has(prop)) {
+            return (...args: unknown[]) => {
+              const rawArgs = args.map(unwrapIfProxy)
+              const wrappedArgs =
+                args.length > 0 ? [wrapItemCallback(entityId, entityName, args[0], 0, true), ...args.slice(1)] : []
+              const rawResult = callAsFunction(target, prop, wrappedArgs)
+              const { newId, newName } = recordDeriveEvent(entityId, basePath, prop, rawArgs, rawResult, entityName)
+              return wrapValue(newId, '', rawResult, newName)
+            }
+          }
+
+          if (CB_ACC_ITEM_METHODS.has(prop)) {
+            return (...args: unknown[]) => {
+              const rawArgs = args.map(unwrapIfProxy)
+              const wrappedArgs =
+                args.length > 0 ? [wrapItemCallback(entityId, entityName, args[0], 1, true), ...args.slice(1)] : []
+              pushEvent({
+                kind: 'iterate',
+                entityId,
+                path: basePath,
+                detail: `${prop}(${previewArgs(rawArgs)})`,
+                args: rawArgs.map((a) => snapshot(a, 0, new Set())),
+              })
+              const rawResult = callAsFunction(target, prop, wrappedArgs)
+              return unwrapIfProxy(rawResult)
+            }
+          }
+
+          if (NO_CB_DERIVE_METHODS.has(prop)) {
+            return (...args: unknown[]) => {
+              const rawArgs = args.map(unwrapIfProxy)
+              const rawResult = callAsFunction(target, prop, rawArgs)
+              const { newId, newName } = recordDeriveEvent(entityId, basePath, prop, rawArgs, rawResult, entityName)
+              return wrapValue(newId, '', rawResult, newName)
+            }
           }
         }
 
