@@ -3,12 +3,12 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import './styles/tokens.css'
 import './index.css'
-import App from './App.tsx'
+import LifecycleApp from './components/lifecycle/LifecycleApp.tsx'
 
 registerSW({ immediate: true })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <LifecycleApp />
   </StrictMode>,
 )
