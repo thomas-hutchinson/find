@@ -8,8 +8,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 const BASE = process.env.BASE_PATH ?? '/find/'
 
 // https://vite.dev/config/
-export default defineConfig(({ command }) => {
-  const base = command === 'build' ? BASE : '/'
+export default defineConfig(({ command, isPreview }) => {
+  // `preview` serves the production build, so it needs the production base too
+  // — otherwise the built HTML asks for /find/assets/* and gets 404s.
+  const base = command === 'build' || isPreview ? BASE : '/'
   return {
   base,
   plugins: [
@@ -18,11 +20,11 @@ export default defineConfig(({ command }) => {
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Find — Device Locator',
+        name: 'Find — Workbench',
         short_name: 'Find',
-        description: 'A sleek, simple way to locate all your devices.',
-        theme_color: '#0b0f17',
-        background_color: '#0b0f17',
+        description: 'A personal workbench of small, self-contained apps.',
+        theme_color: '#0c0e11',
+        background_color: '#0c0e11',
         display: 'standalone',
         orientation: 'any',
         start_url: base,
@@ -39,7 +41,10 @@ export default defineConfig(({ command }) => {
         ],
       },
       workbox: {
-        // Cache the OpenStreetMap tiles so the map keeps working offline.
+        // App-specific build-time config. Workbox rules cannot live inside an
+        // App's folder, so this is the documented exception to the
+        // one-folder-plus-one-Registry-entry rule. See AGENTS.md.
+        // Devices: cache OpenStreetMap tiles so the map works offline.
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/[abc]\.tile\.openstreetmap\.org\/.*/i,

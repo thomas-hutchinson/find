@@ -1,0 +1,14 @@
+/*
+ * Device tokens — facts about the machine, not about taste.
+ *
+ * The Shell owns these and every App inherits them. Anything aesthetic
+ * (colour, type scale, radii, shadows, motion) belongs to the App, scoped to
+ * the App's own root class. See CONTEXT.md.
+ */
+:root {
+  /* Populated by viewport-fit=cover; 0px everywhere else. */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+}

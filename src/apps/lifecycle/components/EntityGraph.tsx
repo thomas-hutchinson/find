@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { Entity, LifeEvent } from '../../lifecycle/types'
+import type { Entity, LifeEvent } from '../types'
 
 interface EntityGraphProps {
   entities: Entity[]

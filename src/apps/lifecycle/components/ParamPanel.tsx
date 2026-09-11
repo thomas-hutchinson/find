@@ -1,4 +1,4 @@
-import type { CodeParam } from '../../lifecycle/types'
+import type { CodeParam } from '../types'
 
 interface ParamPanelProps {
   params: CodeParam[]

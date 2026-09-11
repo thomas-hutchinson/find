@@ -1,4 +1,4 @@
-import type { Branch } from '../../lifecycle/types'
+import type { Branch } from '../types'
 
 interface BranchListProps {
   branches: Branch[]

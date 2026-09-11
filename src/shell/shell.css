@@ -1,0 +1,173 @@
+/*
+ * Shell chrome — the bar, Home, and the App host.
+ *
+ * Neutral graphite on purpose: each App brings its own accent, and Home tints
+ * each tile with it. Everything here is prefixed `shell-` so it can never
+ * collide with an App's class names.
+ */
+:root {
+  --shell-ground: #0c0e11;
+  --shell-surface: #14181d;
+  --shell-surface-hi: #1b2129;
+  --shell-hairline: #232a32;
+  --shell-text: #e8edf2;
+  --shell-text-dim: #8892a0;
+  --shell-text-faint: #5b6673;
+  --shell-bar-h: 44px;
+}
+
+html {
+  background: var(--shell-ground);
+}
+body {
+  color: var(--shell-text);
+  background: var(--shell-ground);
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Bar ---------- */
+.shell-bar {
+  position: fixed;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--shell-bar-h) + var(--safe-t));
+  padding: var(--safe-t) calc(var(--safe-r) + 8px) 0 calc(var(--safe-l) + 8px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(12, 14, 17, 0.88);
+  border-bottom: 1px solid var(--shell-hairline);
+  backdrop-filter: blur(16px) saturate(1.2);
+}
+.shell-bar__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 34px;
+  padding: 0 10px 0 4px;
+  border-radius: 999px;
+  color: var(--shell-text-dim);
+  font-size: 14px;
+  font-weight: 550;
+  transition: background 120ms, color 120ms;
+}
+.shell-bar__back:active {
+  background: var(--shell-surface-hi);
+  color: var(--shell-text);
+}
+.shell-bar__back svg {
+  width: 20px;
+  height: 20px;
+}
+.shell-bar__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--shell-text);
+}
+
+/* ---------- App host ---------- */
+.shell-host {
+  position: fixed;
+  inset: calc(var(--shell-bar-h) + var(--safe-t)) 0 0 0;
+  overflow: hidden;
+  /* Load-bearing. `contain` makes this a containing block for position:fixed
+     descendants, so an App that pins itself to `inset: 0` — both current Apps
+     do — fills the host rather than escaping to the viewport and sliding under
+     the bar. It also establishes a stacking context, so no App can out-z-index
+     the Shell however high it stacks. An App needs to know none of this. */
+  contain: layout paint;
+}
+.shell-loading {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--shell-text-faint);
+  font-size: 14px;
+}
+
+/* ---------- Home ---------- */
+.shell-home {
+  height: 100%;
+  overflow-y: auto;
+  padding: calc(var(--safe-t) + 28px) calc(var(--safe-r) + 20px)
+    calc(var(--safe-b) + 32px) calc(var(--safe-l) + 20px);
+}
+.shell-home__head {
+  max-width: 900px;
+  margin: 0 auto 26px;
+}
+.shell-home__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.shell-home__dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--shell-text-dim);
+}
+.shell-home__tagline {
+  margin-top: 5px;
+  color: var(--shell-text-faint);
+  font-size: 14px;
+}
+.shell-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 12px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.shell-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 132px;
+  padding: 16px;
+  border-radius: 16px;
+  text-align: left;
+  background: var(--shell-surface);
+  border: 1px solid var(--shell-hairline);
+  transition: transform 120ms, border-color 120ms, background 120ms;
+}
+.shell-tile:active {
+  transform: scale(0.975);
+  background: var(--shell-surface-hi);
+}
+@media (hover: hover) {
+  .shell-tile:hover {
+    border-color: color-mix(in srgb, var(--tile-accent) 45%, transparent);
+  }
+}
+.shell-tile__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  color: var(--tile-accent);
+  background: color-mix(in srgb, var(--tile-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tile-accent) 28%, transparent);
+}
+.shell-tile__icon svg {
+  width: 22px;
+  height: 22px;
+}
+.shell-tile__name {
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--shell-text);
+}
+.shell-tile__desc {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--shell-text-faint);
+}

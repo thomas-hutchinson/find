@@ -1,4 +1,4 @@
-import type { Candidate } from '../../lifecycle/types'
+import type { Candidate } from '../types'
 
 interface TargetPickerProps {
   candidates: Candidate[]
