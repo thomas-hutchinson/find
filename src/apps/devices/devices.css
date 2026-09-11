@@ -1,50 +1,27 @@
-/* ---------- Reset & base ---------- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-* {
-  margin: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-html,
-body,
-#root {
-  height: 100%;
-}
-html {
-  background: var(--ground);
-}
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto,
-    Helvetica, Arial, sans-serif;
+/*
+ * Devices — app-owned styling.
+ * Scoped base rules live on .devices-app so they cannot leak to other Apps
+ * (the Lifecycle app is a code editor and needs text selection).
+ */
+.devices-app {
   color: var(--text);
   background: var(--ground);
   letter-spacing: -0.01em;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
   overscroll-behavior: none;
   -webkit-user-select: none;
   user-select: none;
 }
-button {
-  font: inherit;
-  color: inherit;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-input {
-  font: inherit;
-  color: inherit;
+.devices-app :focus-visible {
+  outline: 2px solid var(--beacon);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 .tnum {
   font-variant-numeric: tabular-nums;
 }
 
 /* ---------- App shell ---------- */
-.app {
+.devices-app {
   position: fixed;
   inset: 0;
   overflow: hidden;
@@ -65,7 +42,7 @@ input {
   inset: 0;
   z-index: 0;
 }
-.app--tablet .map {
+.devices-app--tablet .map {
   left: var(--rail-w);
 }
 
@@ -209,7 +186,7 @@ input {
 .locate-fab:disabled {
   opacity: 0.4;
 }
-.app--tablet .locate-fab {
+.devices-app--tablet .locate-fab {
   bottom: calc(var(--safe-b) + 20px);
 }
 
@@ -817,31 +794,9 @@ input {
   }
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* ---------- Focus visibility ---------- */
-:focus-visible {
-  outline: 2px solid var(--beacon);
-  outline-offset: 2px;
-  border-radius: 6px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .self-pin__ring {
     animation: none;
     opacity: 0;
-  }
-  * {
-    animation-duration: 0.001ms !important;
   }
 }

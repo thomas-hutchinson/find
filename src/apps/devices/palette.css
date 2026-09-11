@@ -1,9 +1,8 @@
 /*
- * Design tokens for "Find".
- * Single source of truth for palette, type scale, spacing, radii and motion.
- * Both layout postures (phone bottom-sheet / tablet side-rail) share these.
+ * Devices — app-owned palette, type scale, radii and motion.
+ * Scoped to .devices-app so these names cannot collide with another App's.
  */
-:root {
+.devices-app {
   /* Ground & stepped glass surfaces */
   --ground: #0e1216;
   --map-bg: #0b0f14;
@@ -66,19 +65,12 @@
   --dur-press: 120ms;
   --dur-fly: 450ms;
 
-  /* Safe areas (populated by viewport-fit=cover) */
-  --safe-t: env(safe-area-inset-top, 0px);
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --safe-l: env(safe-area-inset-left, 0px);
-  --safe-r: env(safe-area-inset-right, 0px);
-
   /* Layout */
   --rail-w: 380px;
-  --breakpoint-tablet: 880px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root {
+  .devices-app {
     --dur-sheet: 0ms;
     --dur-press: 0ms;
     --dur-fly: 0ms;

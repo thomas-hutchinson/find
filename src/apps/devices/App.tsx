@@ -188,7 +188,7 @@ export default function App() {
   const baseInert = addOpen || actionModalOpen
 
   return (
-    <div className={`app${isTablet ? ' app--tablet' : ''}`}>
+    <div className={`devices-app${isTablet ? ' devices-app--tablet' : ''}`}>
       <div className="base" inert={baseInert || undefined}>
         <DeviceMap
           ref={mapRef}
@@ -204,7 +204,7 @@ export default function App() {
             <div className="rail__head">
               <div className="brand">
                 <span className="brand__dot" />
-                Find
+                Devices
               </div>
               <div className="rail__controls">
                 <SearchPill value={query} onChange={setQuery} block />
