@@ -4,12 +4,13 @@
 grid of tiles; tap one and that app takes the screen. It exists so that building
 a new small app never means clobbering the last one.
 
-Two apps live here today:
+Three apps live here today:
 
 | App | What it does |
 | --- | --- |
 | **Devices** | Locates your things on a live dark map — distance, last-seen and battery on every row. |
 | **Lifecycle** | Traces every read, write, method call and derivation on a JavaScript object over one run. |
+| **IDE** | Reads and edits this project's own source from a phone — syntax highlighting, a symbol row for the characters phone keyboards bury, and edits that survive leaving the app. |
 
 ## The idea
 
@@ -27,7 +28,8 @@ constraint is the whole design, and everything below follows from it.
   the app.
 - **Apps unmount when you leave them.** Devices runs a GPS watch; it stops the
   moment you go back to Home rather than draining battery behind a code editor.
-- **Apps load lazily.** Opening Lifecycle never downloads Leaflet.
+- **Apps load lazily.** Opening Lifecycle never downloads Leaflet, and neither
+  of them downloads the IDE's editor.
 
 See [CONTEXT.md](./CONTEXT.md) for the vocabulary and
 [AGENTS.md](./AGENTS.md) for how to add an app.
@@ -38,6 +40,7 @@ See [CONTEXT.md](./CONTEXT.md) for the vocabulary and
   hash routing is ~30 hand-rolled lines over `popstate`
 - **Leaflet** with OpenStreetMap tiles for Devices, restyled dark via a CSS
   filter and cached by the service worker for offline use
+- **CodeMirror 6** for the IDE, lazily loaded so it costs nothing until opened
 - **Installable PWA** (`vite-plugin-pwa`) — add it to your home screen and it
   runs full-screen with safe-area insets
 
@@ -79,7 +82,18 @@ src/
                           store/, devices.css, palette.css
     lifecycle/            index.tsx, LifecycleApp.tsx, components/,
                           parser.ts, tracer.ts, lifecycle.css
+    ide/                  index.tsx, IdeApp.tsx, workspace.ts, components/,
+                          hooks/, ide.css, snapshot.plugin.ts
 ```
+
+### The IDE's edits
+
+The IDE ships a build-time snapshot of this repository, so it opens instantly
+and works offline. Edits live in `localStorage` and never leave the device on
+their own — there is no backend and no token. To move work off the phone, use
+**⋯ → Copy patch** or **Download patch** and `git apply` it elsewhere. Editing a
+file in the IDE does not change the running app; the snapshot is fixed until the
+next deploy.
 
 ## Deploy (GitHub Pages)
 

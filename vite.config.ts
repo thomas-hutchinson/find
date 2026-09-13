@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+// App-specific build-time plugin, kept in the App's own folder. See AGENTS.md.
+import { projectSnapshot } from './src/apps/ide/snapshot.plugin.ts'
 
 // Served from a GitHub Pages project site (https://<user>.github.io/find/),
 // so production assets live under /find/. Local dev stays at the root.
@@ -16,6 +18,7 @@ export default defineConfig(({ command, isPreview }) => {
   base,
   plugins: [
     react(),
+    projectSnapshot(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],

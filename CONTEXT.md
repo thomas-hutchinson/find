@@ -50,3 +50,13 @@ _Avoid_: Find, locator, tracker
 **Lifecycle**:
 Traces every read, write and derivation on a JavaScript object over one run.
 _Avoid_: visualizer, tracer, debugger
+
+**IDE**:
+Reads and edits this repository's own source from a phone. Edits are local to
+the device and never reach the repository on their own.
+_Avoid_: editor, code editor, workspace
+
+**Snapshot**:
+The copy of this repository's source captured at build time and shipped inside
+the IDE. It is fixed until the next deploy, so it can lag the real repository.
+_Avoid_: workspace, filesystem, working copy

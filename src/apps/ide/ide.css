@@ -1,0 +1,380 @@
+/*
+ * IDE — app-owned styling.
+ *
+ * Every selector is prefixed `ide-`, and the palette is scoped to `.ide-app`
+ * rather than `:root`, so nothing here can reach Devices or Lifecycle.
+ */
+.ide-app {
+  --ide-bg: #0d1117;
+  --ide-panel: #131a22;
+  --ide-panel-hi: #1b242e;
+  --ide-hairline: #232d38;
+  --ide-text: #dfe7ef;
+  --ide-dim: #8494a4;
+  --ide-faint: #566472;
+  --ide-accent: #8b7cf6;
+  --ide-active: rgba(139, 124, 246, 0.08);
+  --ide-selection: rgba(139, 124, 246, 0.28);
+  --ide-match: rgba(139, 124, 246, 0.22);
+  --ide-dirty: #f0b429;
+
+  /* Syntax */
+  --ide-kw: #c792ea;
+  --ide-str: #9fd67a;
+  --ide-num: #f2a765;
+  --ide-cmt: #5f6d7c;
+  --ide-type: #7fd1e0;
+  --ide-fn: #82aaff;
+  --ide-prop: #c3cede;
+  --ide-tag: #ff8a9b;
+  --ide-punc: #7f8c9b;
+
+  --ide-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+  --ide-code-size: 13px;
+  --ide-keybar-h: 44px;
+  /* Set by useKeyboardInset to the height the on-screen keyboard covers. */
+  --ide-kb: 0px;
+
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--ide-text);
+  background: var(--ide-bg);
+  /* Lift the whole app above the on-screen keyboard. */
+  padding-bottom: var(--ide-kb);
+}
+
+.ide-app :focus-visible {
+  outline: 2px solid var(--ide-accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Top bar ---------- */
+.ide-bar {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 42px;
+  padding: 0 calc(var(--safe-r) + 4px) 0 calc(var(--safe-l) + 4px);
+  background: var(--ide-panel);
+  border-bottom: 1px solid var(--ide-hairline);
+}
+.ide-bar__btn {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--ide-dim);
+  font-size: 17px;
+  line-height: 1;
+}
+.ide-bar__btn:active {
+  background: var(--ide-panel-hi);
+  color: var(--ide-text);
+}
+.ide-bar__file {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.ide-bar__path {
+  font-family: var(--ide-mono);
+  font-size: 12px;
+  color: var(--ide-text);
+  white-space: nowrap;
+  overflow: hidden;
+  /* A long path is more legible truncated at the front: the filename matters
+     more than the leading directories. */
+  direction: rtl;
+  text-overflow: ellipsis;
+}
+.ide-bar__dot,
+.ide-tree__dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ide-dirty);
+}
+
+/* ---------- Actions menu ---------- */
+.ide-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+}
+.ide-scrim--drawer {
+  position: fixed;
+  z-index: 20;
+  background: rgba(4, 7, 10, 0.55);
+}
+.ide-menu {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 6px);
+  right: calc(var(--safe-r) + 6px);
+  width: min(268px, calc(100vw - 24px));
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--ide-panel-hi);
+  border: 1px solid var(--ide-hairline);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.ide-menu button {
+  display: block;
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 14px;
+  color: var(--ide-text);
+}
+.ide-menu button:active {
+  background: var(--ide-panel);
+}
+.ide-menu button:disabled {
+  color: var(--ide-faint);
+}
+.ide-menu__danger:not(:disabled) {
+  color: #ff8a9b;
+}
+.ide-menu__note {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ide-faint);
+  border-top: 1px solid var(--ide-hairline);
+  margin-top: 4px;
+}
+
+/* ---------- Body ---------- */
+.ide-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
+
+/* Phone: the file list is an overlay drawer. */
+.ide-side {
+  position: absolute;
+  z-index: 30;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(78%, 300px);
+  display: flex;
+  flex-direction: column;
+  background: var(--ide-panel);
+  border-right: 1px solid var(--ide-hairline);
+  transform: translateX(-101%);
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  padding-left: var(--safe-l);
+}
+.ide-side--open {
+  transform: none;
+  box-shadow: 8px 0 28px rgba(0, 0, 0, 0.45);
+}
+
+.ide-main {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+.ide-editor {
+  position: absolute;
+  inset: 0;
+}
+.ide-empty {
+  padding: 24px;
+  color: var(--ide-faint);
+  font-size: 14px;
+}
+
+/* ---------- File list ---------- */
+.ide-tree {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+.ide-tree__search {
+  flex: 0 0 auto;
+  padding: 8px;
+  border-bottom: 1px solid var(--ide-hairline);
+}
+.ide-tree__input {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--ide-bg);
+  border: 1px solid var(--ide-hairline);
+  outline: none;
+  font-size: 14px;
+  color: var(--ide-text);
+}
+.ide-tree__input::placeholder {
+  color: var(--ide-faint);
+}
+.ide-tree__scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(var(--safe-b) + 12px);
+}
+.ide-tree__empty {
+  padding: 20px 12px;
+  color: var(--ide-faint);
+  font-size: 13px;
+}
+.ide-tree__group {
+  padding-top: 4px;
+}
+.ide-tree__dir {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 7px 12px 5px;
+  font-family: var(--ide-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ide-faint);
+  background: var(--ide-panel);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ide-tree__file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  /* 40px keeps this a comfortable touch target without wasting list space. */
+  min-height: 40px;
+  padding: 0 12px 0 20px;
+  text-align: left;
+  font-family: var(--ide-mono);
+  font-size: 12.5px;
+  color: var(--ide-dim);
+}
+.ide-tree__file--on {
+  color: var(--ide-text);
+  background: var(--ide-active);
+  box-shadow: inset 2px 0 0 var(--ide-accent);
+}
+.ide-tree__file:active {
+  background: var(--ide-panel-hi);
+}
+.ide-tree__name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Symbol row ---------- */
+.ide-keybar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--ide-keybar-h);
+  padding: 0 calc(var(--safe-r) + 6px) 0 calc(var(--safe-l) + 6px);
+  background: var(--ide-panel);
+  border-top: 1px solid var(--ide-hairline);
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* Horizontal scroll only; never let a drag here scroll the page. */
+  overscroll-behavior-x: contain;
+}
+.ide-keybar::-webkit-scrollbar {
+  display: none;
+}
+.ide-keybar__key {
+  flex: 0 0 auto;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: var(--ide-panel-hi);
+  border: 1px solid var(--ide-hairline);
+  color: var(--ide-text);
+  font-family: var(--ide-mono);
+  font-size: 14px;
+  line-height: 1;
+}
+.ide-keybar__key--wide {
+  min-width: 40px;
+  color: var(--ide-accent);
+  font-size: 15px;
+}
+.ide-keybar__key:active {
+  background: var(--ide-accent);
+  color: #0b0f16;
+}
+.ide-keybar__sep {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 20px;
+  margin: 0 3px;
+  background: var(--ide-hairline);
+}
+
+/* ---------- Toast ---------- */
+.ide-toast {
+  position: absolute;
+  z-index: 60;
+  left: 50%;
+  bottom: calc(var(--ide-keybar-h) + var(--ide-kb) + 14px);
+  transform: translateX(-50%);
+  max-width: calc(100% - 28px);
+  padding: 9px 15px;
+  border-radius: 999px;
+  background: var(--ide-panel-hi);
+  border: 1px solid var(--ide-hairline);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Tablet: the drawer becomes a permanent rail ---------- */
+@media (min-width: 880px) {
+  .ide-side {
+    position: relative;
+    transform: none;
+    box-shadow: none;
+    width: 280px;
+    flex: 0 0 280px;
+  }
+  .ide-scrim--drawer,
+  .ide-bar__btn[aria-label='Files'] {
+    display: none;
+  }
+  .ide-bar__file {
+    justify-content: flex-start;
+    padding-left: 8px;
+  }
+  .ide-bar__path {
+    direction: ltr;
+    font-size: 12.5px;
+  }
+  .ide-app {
+    --ide-code-size: 13.5px;
+  }
+}
