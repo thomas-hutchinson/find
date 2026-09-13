@@ -71,10 +71,21 @@ Everything else — colour, type, radii, shadows, motion — is yours.
 
 ## The one exception to "one folder plus one Registry entry"
 
-Workbox rules are build-time config and cannot live in an App's folder. An App
-needing runtime caching must add a rule to `workbox.runtimeCaching` in
-`vite.config.ts`. Devices does this for OpenStreetMap tiles. Label the rule with
-the App's name.
+Some things are build-time config and cannot be expressed at runtime inside an
+App. Two Apps need this today:
+
+- **Devices** adds a `workbox.runtimeCaching` rule for OpenStreetMap tiles.
+- **IDE** needs the repository's own source, so it ships a Vite plugin
+  (`src/apps/ide/snapshot.plugin.ts`) exposing `virtual:project-snapshot`.
+
+Keep the plugin in the App's own folder and add a single import plus one entry
+in `vite.config.ts`, as the IDE does. That way the exception costs one line of
+shared config rather than a block of app-specific logic. Label anything you add
+with the App's name.
+
+A node-side plugin must also be added to `tsconfig.node.json`'s `include` and
+excluded from `tsconfig.app.json`, since it uses node APIs rather than DOM
+ones.
 
 ## Before you push
 

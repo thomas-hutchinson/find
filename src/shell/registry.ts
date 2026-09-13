@@ -32,6 +32,13 @@ const DevicesIcon = () =>
     'M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
   )
 
+const IdeIcon = () =>
+  svg(
+    'M9.5 8.5 6 12l3.5 3.5',
+    'M14.5 8.5 18 12l-3.5 3.5',
+    'M4 5.5h16v13H4z',
+  )
+
 const LifecycleIcon = () =>
   svg(
     'M4 6h6M4 12h3M4 18h8',
@@ -55,6 +62,14 @@ export const registry: AppEntry[] = [
     icon: LifecycleIcon,
     accent: '#7dd3fc',
     load: () => import('../apps/lifecycle'),
+  },
+  {
+    id: 'ide',
+    name: 'IDE',
+    description: 'Read and edit this project from your phone',
+    icon: IdeIcon,
+    accent: '#8b7cf6',
+    load: () => import('../apps/ide'),
   },
 ]
 
