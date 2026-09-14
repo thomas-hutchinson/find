@@ -4,13 +4,14 @@
 grid of tiles; tap one and that app takes the screen. It exists so that building
 a new small app never means clobbering the last one.
 
-Three apps live here today:
+Four apps live here today:
 
 | App | What it does |
 | --- | --- |
 | **Devices** | Locates your things on a live dark map — distance, last-seen and battery on every row. |
 | **Lifecycle** | Traces every read, write, method call and derivation on a JavaScript object over one run. |
 | **IDE** | Reads and edits this project's own source from a phone — syntax highlighting, a symbol row for the characters phone keyboards bury, and edits that survive leaving the app. |
+| **Sites** | Write a small static web page — markup, styles and script — and run it in a sandboxed preview, with a console for its errors. Sites are stored on the device and download as one self-contained `.html`. |
 
 ## The idea
 
@@ -86,6 +87,8 @@ src/
                           parser.ts, tracer.ts, lifecycle.css
     ide/                  index.tsx, IdeApp.tsx, workspace.ts, components/,
                           hooks/, ide.css, snapshot.plugin.ts
+    sites/                index.tsx, SitesApp.tsx, store.ts, compose.ts,
+                          scaffold.ts, files.ts, components/, hooks/, sites.css
 ```
 
 ### The IDE's edits
@@ -96,6 +99,30 @@ their own — there is no backend and no token. To move work off the phone, use
 **⋯ → Copy patch** or **Download patch** and `git apply` it elsewhere. Editing a
 file in the IDE does not change the running app; the snapshot is fixed until the
 next deploy.
+
+### How Sites previews safely
+
+A Site's three files are combined into one document with `DOMParser`, which
+copes with both a pasted full page and a bare fragment without special-casing
+either. The result renders in an iframe sandboxed **without**
+`allow-same-origin`, so the frame gets an opaque origin and a Site's script
+cannot read Find's `localStorage` or IndexedDB — the Devices location history
+and the IDE's edits live on this origin, and pasting someone else's HTML must
+not hand it any of that. `allow-top-navigation` is off too. Forms, popups and
+modals are enabled, because without them an ordinary page looks broken for
+reasons the user cannot see.
+
+Sites live in IndexedDB rather than `localStorage`, both because they are
+content a user would be upset to lose and to keep a large Site from exhausting
+the ~5MB that every other app shares. Where a browser blocks IndexedDB, Sites
+runs in memory and says so up front rather than losing work silently.
+
+Because a phone has no devtools, the preview forwards the Site's `console.*`
+output and uncaught errors up to a console strip in the app — otherwise a broken
+script just makes Run appear to do nothing. That instrumentation is injected for
+the preview only; the file you download is your own code and nothing else. The
+frame's origin is opaque, so messages are authenticated by source window rather
+than by origin, which would just be the string `"null"`.
 
 ## Deploy (GitHub Pages)
 

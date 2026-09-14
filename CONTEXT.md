@@ -56,7 +56,25 @@ Reads and edits this repository's own source from a phone. Edits are local to
 the device and never reach the repository on their own.
 _Avoid_: editor, code editor, workspace
 
+**Sites**:
+Authors small static web pages from scratch and previews them. Unlike the IDE,
+which edits this repository, Sites edits content the user owns.
+_Avoid_: Studio, Pages, builder
+
 **Snapshot**:
 The copy of this repository's source captured at build time and shipped inside
 the IDE. It is fixed until the next deploy, so it can lag the real repository.
 _Avoid_: workspace, filesystem, working copy
+
+## Things a user makes
+
+**Site**:
+One static web page a user authors in Sites: exactly three files — markup,
+styles and script — under a name they choose. Deliberately not called a
+*project*; that word means this repository.
+_Avoid_: project, page, website, document
+
+**Preview**:
+A Site rendered in a sandboxed frame with no access to Find's own storage. It
+updates only when the user runs it, never as they type.
+_Avoid_: live preview, render, output

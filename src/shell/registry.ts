@@ -46,6 +46,13 @@ const LifecycleIcon = () =>
     'M19 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
   )
 
+const SitesIcon = () =>
+  svg(
+    'M4 5.5h16v13H4z',
+    'M4 9.5h16',
+    'M6.5 7.5h.01M9 7.5h.01',
+  )
+
 export const registry: AppEntry[] = [
   {
     id: 'devices',
@@ -70,6 +77,14 @@ export const registry: AppEntry[] = [
     icon: IdeIcon,
     accent: '#8b7cf6',
     load: () => import('../apps/ide'),
+  },
+  {
+    id: 'sites',
+    name: 'Sites',
+    description: 'Build and preview a small web page',
+    icon: SitesIcon,
+    accent: '#4ec9a6',
+    load: () => import('../apps/sites'),
   },
 ]
 
