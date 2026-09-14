@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { EditorView } from '@codemirror/view'
+import { Console } from './components/Console'
 import { Editor } from './components/Editor'
 import { KeyBar } from './components/KeyBar'
 import { Preview } from './components/Preview'
 import { SiteList } from './components/SiteList'
 import { FILES, type FileKind } from './files'
-import { compose, download } from './compose'
+import { compose, download, isPreviewMessage, type LogEntry } from './compose'
 import { useKeyboardInset } from './hooks/useKeyboardInset'
 import * as store from './store'
 
@@ -26,6 +27,10 @@ export default function SitesApp() {
   const [doc, setDoc] = useState<string | null>(null)
   const [runKey, setRunKey] = useState(0)
   const [view, setView] = useState<EditorView | null>(null)
+  const [logs, setLogs] = useState<LogEntry[]>([])
+  const [consoleOpen, setConsoleOpen] = useState(false)
+  const frameRef = useRef<HTMLIFrameElement | null>(null)
+  const logId = useRef(0)
 
   const root = useRef<HTMLDivElement>(null)
   useKeyboardInset(root)
@@ -51,11 +56,29 @@ export default function SitesApp() {
     return () => mq.removeEventListener('change', sync)
   }, [])
 
+  // A Site's console output arrives by postMessage from the sandboxed frame.
+  // The frame's origin is the string "null", so identity comes from the source
+  // window instead — see isPreviewMessage.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (!isPreviewMessage(event, frameRef.current)) return
+      const { level, text } = event.data
+      setLogs((prev) => {
+        const next = [...prev, { id: (logId.current += 1), level, text }]
+        // A runaway loop can log thousands of lines; keep the tail.
+        return next.length > 200 ? next.slice(-200) : next
+      })
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [])
+
   const site = openId ? sites.find((s) => s.id === openId) : undefined
 
   const run = useCallback(() => {
     if (!site) return
-    setDoc(compose(site))
+    setLogs([])
+    setDoc(compose(site, { instrument: true }))
     setRunKey((k) => k + 1)
   }, [site])
 
@@ -64,7 +87,8 @@ export default function SitesApp() {
   useEffect(() => {
     if (site && openedRef.current !== site.id) {
       openedRef.current = site.id
-      setDoc(compose(site))
+      setLogs([])
+      setDoc(compose(site, { instrument: true }))
       setRunKey((k) => k + 1)
     }
     if (!site) openedRef.current = null
@@ -163,7 +187,19 @@ export default function SitesApp() {
           <KeyBar view={view} />
         </div>
         <div className="st-pane st-pane--preview">
-          <Preview doc={doc} runKey={runKey} />
+          <Preview
+            doc={doc}
+            runKey={runKey}
+            frameRef={(el) => {
+              frameRef.current = el
+            }}
+          />
+          <Console
+            entries={logs}
+            open={consoleOpen}
+            onToggle={() => setConsoleOpen((o) => !o)}
+            onClear={() => setLogs([])}
+          />
         </div>
       </div>
     </div>

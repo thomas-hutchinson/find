@@ -17,8 +17,56 @@ import type { Site } from './store'
  * nor fetches resources.
  */
 
-export function compose(site: Pick<Site, 'html' | 'css' | 'js'>): string {
+/**
+ * Forwards the Site's console output and uncaught errors to the parent.
+ *
+ * Without this a broken script fails silently: the error lands in the browser's
+ * devtools console, which someone on a phone will never open, and pressing Run
+ * appears to do nothing at all.
+ *
+ * Injected only for the Preview — `download()` composes without it, so the file
+ * a user takes away is their own code and nothing else.
+ *
+ * No line numbers: the Site's script is an inline `<script>` in the composed
+ * document, so the browser reports positions relative to that document rather
+ * than to script.js. A wrong line number is worse than none.
+ */
+const CONSOLE_SHIM = `(function () {
+  var send = function (level, text) {
+    try { parent.postMessage({ __findConsole: true, level: level, text: text }, '*') } catch (e) {}
+  };
+  var fmt = function (args) {
+    return Array.prototype.map.call(args, function (a) {
+      if (typeof a === 'string') return a;
+      try { return JSON.stringify(a); } catch (e) { return String(a); }
+    }).join(' ');
+  };
+  ['log', 'info', 'warn', 'error'].forEach(function (level) {
+    var original = console[level];
+    console[level] = function () {
+      send(level, fmt(arguments));
+      if (original) original.apply(console, arguments);
+    };
+  });
+  window.addEventListener('error', function (e) { send('error', e.message); });
+  window.addEventListener('unhandledrejection', function (e) {
+    var r = e.reason;
+    send('error', 'Unhandled promise rejection: ' + ((r && r.message) || String(r)));
+  });
+})();`
+
+export function compose(
+  site: Pick<Site, 'html' | 'css' | 'js'>,
+  { instrument = false }: { instrument?: boolean } = {},
+): string {
   const doc = new DOMParser().parseFromString(site.html || '', 'text/html')
+
+  if (instrument) {
+    // First child of head, so it is installed before anything the Site does.
+    const shim = doc.createElement('script')
+    shim.textContent = CONSOLE_SHIM
+    doc.head.prepend(shim)
+  }
 
   if (site.css.trim()) {
     const style = doc.createElement('style')
@@ -73,4 +121,26 @@ export function download(site: Site): void {
   a.download = `${slug(site.name)}.html`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+/** One console line forwarded from a running Preview. */
+export interface LogEntry {
+  id: number
+  level: 'log' | 'info' | 'warn' | 'error'
+  text: string
+}
+
+/**
+ * True only for messages from a Preview frame we own.
+ *
+ * The frame has an opaque origin, so `event.origin` is the string "null" and is
+ * worthless for authentication. Identity has to come from the source window.
+ */
+export function isPreviewMessage(
+  event: MessageEvent,
+  frame: HTMLIFrameElement | null,
+): event is MessageEvent<{ __findConsole: true; level: LogEntry['level']; text: string }> {
+  if (!frame || event.source !== frame.contentWindow) return false
+  const data = event.data as { __findConsole?: unknown } | null
+  return Boolean(data && typeof data === 'object' && data.__findConsole === true)
 }

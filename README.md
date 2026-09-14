@@ -11,7 +11,7 @@ Four apps live here today:
 | **Devices** | Locates your things on a live dark map — distance, last-seen and battery on every row. |
 | **Lifecycle** | Traces every read, write, method call and derivation on a JavaScript object over one run. |
 | **IDE** | Reads and edits this project's own source from a phone — syntax highlighting, a symbol row for the characters phone keyboards bury, and edits that survive leaving the app. |
-| **Sites** | Write a small static web page — markup, styles and script — and run it in a sandboxed preview. Sites are stored on the device and download as one self-contained `.html`. |
+| **Sites** | Write a small static web page — markup, styles and script — and run it in a sandboxed preview, with a console for its errors. Sites are stored on the device and download as one self-contained `.html`. |
 
 ## The idea
 
@@ -116,6 +116,13 @@ Sites live in IndexedDB rather than `localStorage`, both because they are
 content a user would be upset to lose and to keep a large Site from exhausting
 the ~5MB that every other app shares. Where a browser blocks IndexedDB, Sites
 runs in memory and says so up front rather than losing work silently.
+
+Because a phone has no devtools, the preview forwards the Site's `console.*`
+output and uncaught errors up to a console strip in the app — otherwise a broken
+script just makes Run appear to do nothing. That instrumentation is injected for
+the preview only; the file you download is your own code and nothing else. The
+frame's origin is opaque, so messages are authenticated by source window rather
+than by origin, which would just be the string `"null"`.
 
 ## Deploy (GitHub Pages)
 

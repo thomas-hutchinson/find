@@ -20,9 +20,11 @@ interface Props {
   doc: string | null
   /** Changes on every Run so the frame remounts and scripts re-execute. */
   runKey: number
+  /** Lets the parent authenticate postMessages by source window. */
+  frameRef: (el: HTMLIFrameElement | null) => void
 }
 
-export function Preview({ doc, runKey }: Props) {
+export function Preview({ doc, runKey, frameRef }: Props) {
   if (doc === null) {
     return (
       <div className="st-preview st-preview--empty">
@@ -33,6 +35,7 @@ export function Preview({ doc, runKey }: Props) {
   return (
     <iframe
       key={runKey}
+      ref={frameRef}
       className="st-preview"
       title="Site preview"
       sandbox={SANDBOX}
