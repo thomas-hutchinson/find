@@ -44,12 +44,37 @@ export default defineConfig(({ command, isPreview }) => {
         ],
       },
       workbox: {
+        // Precache the Shell only — index.html, the Shell's own chunk, the
+        // manifest and the icons. App chunks are deliberately absent: each App
+        // is cached the first time it is opened (see runtimeCaching below), so
+        // installing Find does not drag down every App's dependencies. The
+        // trade is that an App you have never opened will not work offline.
+        //
+        // These patterns are deliberately an allow-list rather than a list of
+        // App chunks to ignore, so adding an App needs no change here.
+        globPatterns: [
+          'index.html',
+          'manifest.webmanifest',
+          'assets/index-*.{js,css}',
+          '*.{png,svg,ico}',
+        ],
         // App-specific build-time config. Workbox rules cannot live inside an
         // App's folder, so this is the documented exception to the
         // one-folder-plus-one-Registry-entry rule. See AGENTS.md.
-        // Devices: cache OpenStreetMap tiles so the map works offline.
         runtimeCaching: [
           {
+            // App chunks are content-hashed and therefore immutable: cache the
+            // first time an App is opened, then serve offline forever.
+            urlPattern: /\/assets\/[^/]+\.(?:js|css)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'app-chunks',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Devices: cache OpenStreetMap tiles so the map works offline.
             urlPattern: /^https:\/\/[abc]\.tile\.openstreetmap\.org\/.*/i,
             handler: 'CacheFirst',
             options: {
