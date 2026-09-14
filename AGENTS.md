@@ -69,6 +69,14 @@ Only two things, both inherited automatically:
 
 Everything else — colour, type, radii, shadows, motion — is yours.
 
+## Offline
+
+Only the Shell is precached. An App's chunk is cached by the service worker the
+first time that App is opened, so installing Find stays cheap however many Apps
+exist, and an App the user has never opened will not work offline. You need do
+nothing to opt in — the caching rule matches any hashed asset, so a new App is
+covered automatically.
+
 ## The one exception to "one folder plus one Registry entry"
 
 Some things are build-time config and cannot be expressed at runtime inside an

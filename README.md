@@ -42,7 +42,9 @@ See [CONTEXT.md](./CONTEXT.md) for the vocabulary and
   filter and cached by the service worker for offline use
 - **CodeMirror 6** for the IDE, lazily loaded so it costs nothing until opened
 - **Installable PWA** (`vite-plugin-pwa`) — add it to your home screen and it
-  runs full-screen with safe-area insets
+  runs full-screen with safe-area insets. Only the shell is precached; each app
+  is cached the first time you open it, so installing Find does not download
+  every app's dependencies. An app you have never opened will not work offline.
 
 ## Run it
 
