@@ -9,10 +9,7 @@ export default function Home() {
   return (
     <div className="shell-home">
       <header className="shell-home__head">
-        <h1 className="shell-home__title">
-          <span className="shell-home__dot" />
-          Find
-        </h1>
+        <h1 className="shell-home__title">Find</h1>
         <p className="shell-home__tagline">
           {registry.length} {registry.length === 1 ? 'app' : 'apps'} on this
           workbench

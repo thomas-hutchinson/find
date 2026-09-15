@@ -107,6 +107,46 @@
   background: var(--ide-dirty);
 }
 
+/* ---------- Tooltips ---------- */
+/* Hover-only: a tooltip fired by touch just sticks to the screen after a tap.
+   Every control here also carries an aria-label, so nothing is lost on a
+   phone. */
+@media (hover: hover) {
+  .ide-app [data-tip] {
+    position: relative;
+  }
+  .ide-app [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    z-index: 70;
+    top: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 9px;
+    border-radius: 7px;
+    background: var(--ide-panel-hi);
+    border: 1px solid var(--ide-hairline);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    color: var(--ide-text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 11.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 110ms ease 380ms;
+  }
+  .ide-app [data-tip][data-tip-align='end']::after {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+  .ide-app [data-tip]:hover::after,
+  .ide-app [data-tip]:focus-visible::after {
+    opacity: 1;
+  }
+}
+
 /* ---------- Actions menu ---------- */
 .ide-scrim {
   position: absolute;

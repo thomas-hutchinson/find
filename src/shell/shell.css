@@ -99,18 +99,9 @@ body {
   margin: 0 auto 26px;
 }
 .shell-home__title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   font-size: 30px;
   font-weight: 700;
   letter-spacing: -0.03em;
-}
-.shell-home__dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: var(--shell-text-dim);
 }
 .shell-home__tagline {
   margin-top: 5px;

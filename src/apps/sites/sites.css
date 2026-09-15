@@ -250,18 +250,29 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.st-bar__download {
+/* Secondary button: bordered and labelled rather than a bare glyph. */
+.st-btn {
   flex: 0 0 auto;
-  width: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 32px;
+  padding: 0 12px;
   border-radius: 8px;
-  color: var(--st-dim);
-  font-size: 17px;
-}
-.st-bar__download:active {
   background: var(--st-panel-hi);
+  border: 1px solid var(--st-hairline);
   color: var(--st-text);
+  font-size: 13.5px;
+  font-weight: 550;
 }
+.st-btn:active {
+  background: var(--st-hairline);
+}
+.st-btn__icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
 .st-run {
   flex: 0 0 auto;
   height: 32px;
@@ -274,6 +285,63 @@
 }
 .st-run:active {
   background: var(--st-accent-press);
+}
+
+/* Below the tablet breakpoint the Preview tab runs the Site, so a separate Run
+   button would be a second control for the same action competing for the
+   narrowest bar. The Download label goes too — the icon carries it there. */
+@media (max-width: 879px) {
+  .st-run {
+    display: none;
+  }
+  .st-btn__label {
+    display: none;
+  }
+  .st-btn {
+    padding: 0 9px;
+  }
+}
+
+/* ---------- Tooltips ---------- */
+/* Hover-only by design: a tooltip that fires on touch just sticks to the screen
+   after a tap. `@media (hover: hover)` keeps them off phones entirely, where
+   every control is either labelled or has an aria-label anyway. */
+@media (hover: hover) {
+  .st-app [data-tip] {
+    position: relative;
+  }
+  .st-app [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    z-index: 70;
+    top: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 9px;
+    border-radius: 7px;
+    background: var(--st-panel-hi);
+    border: 1px solid var(--st-hairline);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    color: var(--st-text);
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    /* Delayed in, instant out: no flicker when crossing a row of buttons. */
+    transition: opacity 110ms ease 380ms;
+  }
+  /* Right-edge controls would otherwise be clipped by the app's overflow. */
+  .st-app [data-tip][data-tip-align='end']::after {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+  .st-app [data-tip]:hover::after,
+  .st-app [data-tip]:focus-visible::after {
+    opacity: 1;
+  }
 }
 
 .st-tabs {
