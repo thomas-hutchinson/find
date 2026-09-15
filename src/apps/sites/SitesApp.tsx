@@ -129,19 +129,34 @@ export default function SitesApp() {
             setOpenId(null)
           }}
           aria-label="All sites"
+          data-tip="All sites"
         >
           ‹
         </button>
         <span className="st-bar__name">{site.name}</span>
         <button
           type="button"
-          className="st-bar__download"
+          className="st-btn"
           onClick={() => download(site)}
           aria-label="Download this site"
+          data-tip="Download as a single .html file"
+          data-tip-align="end"
         >
-          ↓
+          <span className="st-btn__icon" aria-hidden>
+            ↓
+          </span>
+          <span className="st-btn__label">Download</span>
         </button>
-        <button type="button" className="st-run" onClick={run}>
+        {/* Only where there is no Preview tab to press. Below the tablet
+            breakpoint the Preview tab runs the Site itself, so a separate Run
+            button would be a second control for one action. */}
+        <button
+          type="button"
+          className="st-run"
+          onClick={run}
+          data-tip="Re-run this site"
+          data-tip-align="end"
+        >
           Run
         </button>
       </header>
@@ -169,7 +184,12 @@ export default function SitesApp() {
         <button
           type="button"
           className={`st-tab st-tab--preview${pane === 'preview' ? ' st-tab--on' : ''}`}
-          onClick={() => setPane('preview')}
+          // Runs every time, including when Preview is already showing, so it
+          // doubles as the re-run control on phones.
+          onClick={() => {
+            run()
+            setPane('preview')
+          }}
         >
           Preview
         </button>

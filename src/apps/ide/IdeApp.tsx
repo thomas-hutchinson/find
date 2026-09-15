@@ -100,6 +100,7 @@ export default function IdeApp() {
           onClick={() => setDrawer((d) => !d)}
           aria-label="Files"
           aria-expanded={drawer}
+          data-tip="Files"
         >
           ☰
         </button>
@@ -115,6 +116,8 @@ export default function IdeApp() {
           onClick={() => setMenu((m) => !m)}
           aria-label="Actions"
           aria-expanded={menu}
+          data-tip="Actions"
+          data-tip-align="end"
         >
           ⋯
         </button>
