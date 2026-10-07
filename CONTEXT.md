@@ -78,3 +78,39 @@ _Avoid_: project, page, website, document
 A Site rendered in a sandboxed frame with no access to Find's own storage. It
 updates only when the user runs it, never as they type.
 _Avoid_: live preview, render, output
+
+**Bois Weekend**:
+Splits a group's shared spending on a trip: friends photograph receipts,
+assign the items to people, and see who pays whom.
+_Avoid_: Splitwise, bill splitter, expenses
+
+## Things a Bois Weekend holds
+
+**Weekend**:
+One trip shared by a group of people. Holds many Receipts and is settled once,
+at the end. Its people can be copied from an earlier Weekend.
+_Avoid_: trip, event, group, tab
+
+**Receipt**:
+One purchase someone paid for during a Weekend, read from a photo into Items.
+_Avoid_: bill, expense, transaction
+
+**Member**:
+A person in a Weekend. A Member may be a placeholder, added by name by someone
+else, until that person signs in and takes the place over.
+_Avoid_: user, friend, participant, boi
+
+**Item**:
+One line of a Receipt, shared among the Members assigned to it. It splits
+evenly unless given uneven shares.
+_Avoid_: line, product, entry
+
+**Settlement**:
+The fewest Transfers that leave everyone in a Weekend even, given what each
+person paid and what each person had.
+_Avoid_: balance, summary, total
+
+**Transfer**:
+One payment in a Settlement: one Member pays another a given amount. Marked
+paid by hand once it has happened; Find never moves money.
+_Avoid_: debt, IOU, payment
